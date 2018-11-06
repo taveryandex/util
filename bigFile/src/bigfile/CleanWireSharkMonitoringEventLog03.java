@@ -2,7 +2,7 @@ package bigfile;
 /*
 Nujno vernut' k jizni etot parser
 
-Ochischaem ot musora fail schetchikami monitoringa loga GlassFish sobrannii classom Getcounts6
+Ochischaem ot musora fail schetchikami monitoringa loga WireShark sobrannii classom Getcounts6
 Sozdast fail v toizhe dirrectorii s prefixom clean
 */
 
@@ -26,10 +26,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
  
-public class CleanGlassFishMonitoringEventLog03 implements Closeable {
+public class CleanWireSharkMonitoringEventLog03 implements Closeable {
     static String  glassFishMonitoringFileName="Getcounts43_4.txt";
     //static String glassFishEventLogPath="U:/Results/3CardRetCom/";
-    static String GlassFishMonitoringFileDir=""; 
+    static String WireSharkMonitoringFileDir=""; 
     static String glassFishServerLog="";//glassFishEventLogPath+glassFishEventLogName;
 	static int lengthChar=10000; // Сколько символов напечатать
 	static int position=0; // С какого символа начать просмотр
@@ -40,21 +40,26 @@ public class CleanGlassFishMonitoringEventLog03 implements Closeable {
     private final int[] linePositions=null;
     private final int[] lineSizes=null;
     Properties settingsAll = new Properties();
-            
+    static boolean isDebug=false;
+    
+//SELECT  TO_TIMESTAMP('2004-09-30 23:53:48,140000000', 'YYYY-MM-DD HH24:MI:SS,FF9') FROM    dual    
     public static void main(String[] args){
-        CleanGlassFishMonitoringEventLog03 main= new CleanGlassFishMonitoringEventLog03();
+        int i=0;
+        int lineIndex=0;
+        int arrivalTimeIndex=0;
+        CleanWireSharkMonitoringEventLog03 main= new CleanWireSharkMonitoringEventLog03();
         InputStream input=null;
         try {
-            input = new FileInputStream("src/main/resources/settingsAll.properties");
+            input = new FileInputStream("src/bigfile/settingsAll.properties");
             main.settingsAll.load(input);
-            GlassFishMonitoringFileDir=main.settingsAll.getProperty("GlassFishMonitoringFileDir");
-            glassFishMonitoringFileName=main.settingsAll.getProperty("glassFishMonitoringFileName");
-            glassFishServerLog=GlassFishMonitoringFileDir+glassFishMonitoringFileName;
+            WireSharkMonitoringFileDir=main.settingsAll.getProperty("WireSharkMonitoringFileDir");
+            glassFishMonitoringFileName=main.settingsAll.getProperty("WireSharkMonitoringFileName");
+            glassFishServerLog=WireSharkMonitoringFileDir+glassFishMonitoringFileName;
             
         } catch (FileNotFoundException ex) {
-            Logger.getLogger(CleanGlassFishMonitoringEventLog03.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(CleanWireSharkMonitoringEventLog03.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
-            Logger.getLogger(CleanGlassFishMonitoringEventLog03.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(CleanWireSharkMonitoringEventLog03.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         byte[] massbyte;
@@ -88,6 +93,7 @@ public class CleanGlassFishMonitoringEventLog03 implements Closeable {
 		    	System.out.println("**************************");
 		    	System.out.println(" ");
 			fileBuffer.position(position);
+                        lineIndex=0;
                         //Пробежимся по всему файлу
 	            for (int count=1; count <=lengthChar-1; count ++){
 	            	//int currentPosition = fileBuffer.position();
@@ -98,10 +104,26 @@ public class CleanGlassFishMonitoringEventLog03 implements Closeable {
  
                             if (readSimbol.equals("\n")){
                                 position++;
-                                //System.out.println("line :"+line);
-                                
+                                if (isDebug) System.out.println("line :"+line);
+                                System.out.print(lineIndex+" | "); 
                                 //Тут мы должны разделить строку на элементы
+                                String [] cols=line.toString().split("\",\"");
+                                if (lineIndex==0){ 
+                                for (String col:cols){               
+                                    if (col.equals("Arrival Time")){
+                                        arrivalTimeIndex=i;
+                                    }
+                                     System.out.print(" | "+col);   
+                                    i=i+1;
+                                }
                                 
+                                }
+                                else{
+                                    System.out.print(" | "+cols[arrivalTimeIndex]);  
+                                    }
+                                
+                                
+                                System.out.println("");
                                 Pattern pattern = Pattern.compile("entity(.*?)childResources");  
                                 Matcher matcher =pattern.matcher(line);
                                 while (matcher.find()){
@@ -192,9 +214,10 @@ public class CleanGlassFishMonitoringEventLog03 implements Closeable {
                                 }   
                                 
                                 line.setLength(0);
+                                lineIndex=lineIndex+1;
                             }
                             
-                            
+                         
 		        } //Конец обработки файла
                     
                     
@@ -221,7 +244,7 @@ public class CleanGlassFishMonitoringEventLog03 implements Closeable {
  
         private void writeToFile(String data){
 
-        try(FileWriter writer = new FileWriter(GlassFishMonitoringFileDir +"csv"+glassFishMonitoringFileName, true))
+        try(FileWriter writer = new FileWriter(WireSharkMonitoringFileDir +"csv"+glassFishMonitoringFileName, true))
         {
            // запись всей строки
             writer.write(data);
@@ -238,7 +261,7 @@ public class CleanGlassFishMonitoringEventLog03 implements Closeable {
         } 
         private void writeOperToFile(String data){
 
-        try(FileWriter writer = new FileWriter(GlassFishMonitoringFileDir +"oper"+glassFishMonitoringFileName, true))
+        try(FileWriter writer = new FileWriter(WireSharkMonitoringFileDir +"oper"+glassFishMonitoringFileName, true))
         {
            // запись всей строки
             writer.write(data);
