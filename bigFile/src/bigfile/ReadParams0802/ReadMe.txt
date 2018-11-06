@@ -1,1 +1,0 @@
-Etot primer otsilae soobschenie na udalennii server
